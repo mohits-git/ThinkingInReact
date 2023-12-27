@@ -1,4 +1,4 @@
-##Thinking In React
+## Thinking In React
 This repository will have my journey to learning react.
 It will contains all the mini projects or concepts I will be learning in React.
 
