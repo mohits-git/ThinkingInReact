@@ -1,24 +1,21 @@
-import { useEffect, useState } from 'react'
-import appwriteService from '../appwrite/config'
 import { useNavigate, useParams } from 'react-router-dom';
 import { PostForm, Container } from '../components';
+import { useSelector } from 'react-redux';
+import { useEffect } from 'react';
 
 export default function EditPost(){
-    const [post, setPost] = useState(null);
+    let post = null;
     const { slug } = useParams();
     const navigate = useNavigate();
+    post = useSelector(state => {
+        return state.post.posts.find(post => post.$id === slug)
+    })
 
     useEffect(() => {
-       if(slug) {
-           appwriteService.getPost(slug).then((post) => {
-               if(post) {
-                   setPost(post)
-               }
-           })
-       } else {
-           navigate('/')
-       } 
-    }, [slug, navigate])
+        if(!slug || !post) {
+            navigate('/')
+        }
+    }, [slug])
 
     return post ? ( 
         <div className='py-8'>

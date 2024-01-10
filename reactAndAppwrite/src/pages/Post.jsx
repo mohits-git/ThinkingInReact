@@ -1,35 +1,38 @@
-import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import appwriteService from "../appwrite/config";
 import { Button, Container } from "../components";
 import parse from "html-react-parser";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { removePost } from "../store/postSlice";
+import { useEffect } from "react";
 
 export default function Post(){
-    const [post, setPost] = useState(null);
+    let post = null;
     const { slug } = useParams();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    post = useSelector(state => {
+        return state.post.posts.find(post => post.$id === slug)
+    })
+
+    useEffect(() => {
+        if(!slug || !post) {
+            navigate('/')
+        }
+    }, [slug])
 
     const userData = useSelector((state) => state.auth.userData);
 
     const isAuthor = (post && userData ) ? post.userId === userData.$id : false;
 
-    useEffect(() => {
-        if (slug) {
-            appwriteService.getPost(slug).then((post) => {
-                if (post) setPost(post);
-                else navigate("/");
-            });
-        } else navigate("/");
-    }, [slug, navigate]);
-
     const deletePost = () => {
         appwriteService.deletePost(post.$id).then((status) => {
             if (status) {
                 appwriteService.deleteFile(post.featuredImage);
-                navigate("/");
+                navigate('/')
             }
         });
+        dispatch(removePost({...post}))
     };
 
     return post ? (

@@ -2,17 +2,14 @@ import { useForm } from "react-hook-form";
 import appwriteService from "../../appwrite/config";
 import { Button, Input, Select, RTE } from "..";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect } from "react";
+import { createPost, updatePost } from "../../store/postSlice";
 
 export default function PostForm({ post }) {
     const navigate = useNavigate();
-    const userData = useSelector(state => {
-        console.log(state)
-        console.log(state.auth)
-        return state.auth.userData
-    });
-    console.log(userData)
+    const dispatch = useDispatch();
+    const userData = useSelector(state => state.auth.userData)
     const { register, handleSubmit, watch, setValue, control, getValues } = useForm({
         defaultValues: {
             title: post?.title || '',
@@ -27,22 +24,29 @@ export default function PostForm({ post }) {
             const file = data.image[0] ? await appwriteService.uploadFile(data.image[0]) : null;
             if(file) {
                 appwriteService.deleteFile(post.featuredImage)
+                data.featuredImage = file.$id;
+            } else{
+                data.featuredImage = post.featuredImage;
             }
+            delete data.image;
             const dbPost = await appwriteService.updatePost(post.$id, { ...data, featuredImage: file? file.$id : undefined })
             if(dbPost){
                 navigate(`/post/${dbPost.$id}`)
             }
+            dispatch(updatePost({ post, data }))
         } 
         else {
             const file = data.image[0] ? await appwriteService.uploadFile(data.image[0]) : null;
             if(file){
                 const fileId = file.$id;
                 data.featuredImage = fileId;
+                delete data.image;
                 const dbPost = await appwriteService.createPost({...data, userId: userData.$id })
                 if(dbPost) {
                     navigate(`/post/${dbPost.$id}`)
-                }
-            } 
+                } 
+                dispatch(createPost({...data, userId : userData.$id, $id: dbPost.$id}))
+            }
         }
     }
 
